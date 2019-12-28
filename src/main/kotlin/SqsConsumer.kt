@@ -27,7 +27,7 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
         launchMsgReceiver(messageChannel)
     }
 
-    //MsgReceiver : SQS로 주기적으로 polling하여 큐 메세지를 받아오고, channel을 통해 worker로 큐 메세지를 넘긴다.
+    //MsgReceiver : SQS로 주기적으로 polling하여 큐 메세지를 받아오고, channel을 통해 processor로 큐 메세지를 넘긴다.
     private fun CoroutineScope.launchMsgReceiver(channel: SendChannel<Message>) = launch {
         repeatUntilCancelled {
             val receiveRequest = ReceiveMessageRequest.builder()
