@@ -1,3 +1,5 @@
+package models.sqs
+
 data class ReservationInfo(
     val event_id: String,
     val user_id: String,

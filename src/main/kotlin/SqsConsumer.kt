@@ -1,9 +1,19 @@
+import com.amazonaws.regions.Regions
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression
+import com.amazonaws.services.dynamodbv2.model.AttributeValue
+import com.amazonaws.services.dynamodbv2.model.ScanRequest
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.future.await
+import models.db.Event
+import models.sqs.ReservationInfo
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.Message
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
@@ -23,7 +33,19 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
     /**
      * json string으로 넘어오는 queue message를 파싱하기 위한 object mapper.
      */
-    private val mapper = jacksonObjectMapper()
+    private val jsonMapper = jacksonObjectMapper()
+
+    /**
+     * dynamoDB client
+     */
+    private val ddbClient: AmazonDynamoDB = AmazonDynamoDBClientBuilder.standard()
+        .withRegion(Regions.AP_NORTHEAST_2)
+        .build()
+
+    /**
+     * dynamoDB mapper
+     */
+    private val ddbMapper = DynamoDBMapper(ddbClient)
 
     fun start() = runBlocking {
         val messageChannel = Channel<Message>()
@@ -87,6 +109,9 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
     //큐 메세지를 처리하는 예시 코드
     //dynamoDB에 데이터 저장
     private fun processMsg(message: Message) {
+        //mapper를 이용해 queue message를 ReservationInfo 객체로 parsing 한다.
+        val reservationInfo: ReservationInfo = jsonMapper.readValue(message.body())
+
         /*TODO*/
     }
 
