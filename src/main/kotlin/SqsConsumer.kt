@@ -1,3 +1,4 @@
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -18,6 +19,11 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
     private val supervisorJob = SupervisorJob()
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.IO + supervisorJob
+
+    /**
+     * json string으로 넘어오는 queue message를 파싱하기 위한 object mapper.
+     */
+    private val mapper = jacksonObjectMapper()
 
     fun start() = runBlocking {
         val messageChannel = Channel<Message>()
