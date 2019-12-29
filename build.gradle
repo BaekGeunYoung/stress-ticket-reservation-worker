@@ -19,6 +19,7 @@ dependencies {
     implementation "com.amazonaws:aws-java-sdk-dynamodb:1.11.563"
     implementation platform('software.amazon.awssdk:bom:2.5.29')
     implementation 'software.amazon.awssdk:sqs'
+    compile "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.+"
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
