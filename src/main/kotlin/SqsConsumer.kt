@@ -112,7 +112,6 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
         //mapper를 이용해 queue message를 ReservationInfo 객체로 parsing 한다.
         val reservationInfo: ReservationInfo = jsonMapper.readValue(message.body())
 
-        /*TODO*/
     }
 
     private suspend fun deleteMessage(message: Message) {
