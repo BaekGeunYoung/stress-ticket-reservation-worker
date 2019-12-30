@@ -17,6 +17,10 @@ data class Event(
     @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.S)
     var lastLoginDatetime: LocalDateTime? = null,
 
+    @DynamoDBAttribute(attributeName = "last_logout_datetime")
+    @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.S)
+    var lastLogoutDatetime: LocalDateTime? = null,
+
     @DynamoDBAttribute(attributeName = "last_page_view_datetime")
     @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.S)
     var lastPageViewDatetime: LocalDateTime? = null,
