@@ -4,6 +4,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
+import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.*
@@ -111,23 +112,28 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
     //큐 메세지를 처리하는 예시 코드
     //dynamoDB에 데이터 저장
     private fun processMsg(message: Message) {
-        //mapper를 이용해 queue message를 ReservationInfo 객체로 parsing 한다.
-        val reservationInfo: ReservationInfo = jsonMapper.readValue(message.body())
+        try{
+            //mapper를 이용해 queue message를 ReservationInfo 객체로 parsing 한다.
+            val reservationInfo: ReservationInfo = jsonMapper.readValue(message.body())
 
-        //partition key를 통한 event table 조회
-        val eventItems = getEventPartition(reservationInfo.event_id)
+            //partition key를 통한 event table 조회
+            val eventItems = getEventPartition(reservationInfo.event_id)
 
-        val reservationDatetime = LocalDateTime.now()
-        val reservation = Reservation(user_id = reservationInfo.user_id, reservation_datetime = reservationDatetime)
+            val reservationDatetime = LocalDateTime.now()
+            val reservation = Reservation(user_id = reservationInfo.user_id, reservation_datetime = reservationDatetime)
 
-        if(isValidScenario(eventItems, reservationDatetime)) {
-            saveReservation(reservation, reservationInfo.ticket_num)
-            println("saved ${reservationInfo.ticket_num} successful reservation(s)")
+            if(isValidScenario(eventItems, reservationDatetime)) {
+                saveReservation(reservation, reservationInfo.ticket_num)
+                println("saved ${reservationInfo.ticket_num} successful reservation(s)")
+            }
+            else {
+                saveReservation(reservation.toFailedReservation(), reservationInfo.ticket_num)
+                println("saved ${reservationInfo.ticket_num} failed reservation(s)")
+            }
+        } catch (e : JsonParseException) {
+            println("${message.body()} cannot be parsed into ReservationInfo class")
         }
-        else {
-            saveReservation(reservation.toFailedReservation(), reservationInfo.ticket_num)
-            println("saved ${reservationInfo.ticket_num} failed reservation(s)")
-        }
+
     }
 
     private fun isValidScenario(eventItems: List<Event>, reservationDatetime: LocalDateTime) : Boolean {
@@ -152,20 +158,20 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
     }
 
     private fun saveReservation(reservation: Reservation, ticketNum : Int) {
-        for(i in (0 .. ticketNum)) {
+        for(i in (0 until ticketNum)) {
             ddbMapper.save(reservation)
         }
     }
 
     private fun saveReservation(reservation: FailedReservation, ticketNum : Int) {
-        for(i in (0 .. ticketNum)) {
+        for(i in (0 until ticketNum)) {
             ddbMapper.save(reservation)
         }
     }
 
     private fun getEventPartition(eventId: Int): List<Event> {
         val eav = HashMap<String, AttributeValue>()
-        eav[":eventId"] = AttributeValue(eventId.toString())
+        eav[":eventId"] = AttributeValue().withN(eventId.toString())
 
         val scanExpression = DynamoDBScanExpression()
             .withFilterExpression("event_id = :eventId")
