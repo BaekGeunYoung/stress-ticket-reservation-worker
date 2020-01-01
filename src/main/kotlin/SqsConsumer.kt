@@ -57,11 +57,14 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
      */
     private val mutex = Mutex()
 
-    private var seatsCnt0 = getSeatsCnt(0, ddbClient, ddbMapper)
-    private var seatsCnt1 = getSeatsCnt(1, ddbClient, ddbMapper)
-    private var seatsCnt2 = getSeatsCnt(2, ddbClient, ddbMapper)
+    /**
+     * 좌석 갯수 관리를 위한 변수 선언
+     */
+    private var seatsCnt0 = getSeatsCnt(0, ddbMapper)
+    private var seatsCnt1 = getSeatsCnt(1, ddbMapper)
+    private var seatsCnt2 = getSeatsCnt(2, ddbMapper)
 
-    private fun getSeatsCnt(concertId: Int, ddbClient: AmazonDynamoDB, ddbMapper: DynamoDBMapper): Int {
+    private fun getSeatsCnt(concertId: Int, ddbMapper: DynamoDBMapper): Int {
         val eav = HashMap<String, AttributeValue>()
         eav[":concertId"] = AttributeValue().withN(concertId.toString())
 
