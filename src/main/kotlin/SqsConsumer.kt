@@ -12,6 +12,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import models.db.Event
 import models.db.FailedReservation
 import models.db.Reservation
@@ -49,6 +51,26 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
      * dynamoDB mapper
      */
     private val ddbMapper = DynamoDBMapper(ddbClient)
+
+    /**
+     * mutex class instance for mutual exclusion
+     */
+    private val mutex = Mutex()
+
+    private var seatsCnt0 = getSeatsCnt(0, ddbClient, ddbMapper)
+    private var seatsCnt1 = getSeatsCnt(1, ddbClient, ddbMapper)
+    private var seatsCnt2 = getSeatsCnt(2, ddbClient, ddbMapper)
+
+    private fun getSeatsCnt(concertId: Int, ddbClient: AmazonDynamoDB, ddbMapper: DynamoDBMapper): Int {
+        val eav = HashMap<String, AttributeValue>()
+        eav[":concertId"] = AttributeValue().withN(concertId.toString())
+
+        val scanExpression = DynamoDBScanExpression()
+            .withFilterExpression("concert_id = :concertId")
+            .withExpressionAttributeValues(eav)
+
+        return ddbMapper.scan(Reservation::class.java, scanExpression).size
+    }
 
     fun start() = runBlocking {
         val messageChannel = Channel<Message>()
@@ -98,7 +120,10 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
         repeatUntilCancelled {
             for (msg in channel) {
                 try {
-                    processMsg(msg)
+                    //공연의 남은 좌석 개수를 관리하기 위해 mutex 활용
+                    mutex.withLock {
+                        processMsg(msg)
+                    }
                     deleteMessage(msg)
                 } catch (ex: Exception) {
                     println("${currentThread().name} exception trying to process message ${msg.body()}")
@@ -115,14 +140,14 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
         try{
             //mapper를 이용해 queue message를 ReservationInfo 객체로 parsing 한다.
             val reservationInfo: ReservationInfo = jsonMapper.readValue(message.body())
-
-            //partition key를 통한 event table 조회
-            val eventItems = getEventPartition(reservationInfo.event_id)
-
             val reservationDatetime = LocalDateTime.now()
-            val reservation = Reservation(user_id = reservationInfo.user_id, reservation_datetime = reservationDatetime)
+            val reservation = Reservation(
+                        user_id = reservationInfo.user_id,
+                        reservation_datetime = reservationDatetime,
+                        concert_id = reservationInfo.concert_id
+                    )
 
-            if(isValidScenario(eventItems, reservationDatetime)) {
+            if(isValidScenario(reservationInfo, reservationDatetime)) {
                 saveReservation(reservation, reservationInfo.ticket_num)
                 println("saved ${reservationInfo.ticket_num} successful reservation(s)")
             }
@@ -136,7 +161,19 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
 
     }
 
-    private fun isValidScenario(eventItems: List<Event>, reservationDatetime: LocalDateTime) : Boolean {
+    private fun isValidScenario(
+        reservationInfo: ReservationInfo,
+        reservationDatetime: LocalDateTime
+    ) : Boolean {
+        //partition key를 통한 event table 조회
+        val eventItems = getEventPartition(reservationInfo.event_id)
+
+        val targetConcertSeats = when(reservationInfo.concert_id) {
+            0 -> seatsCnt0
+            1 -> seatsCnt1
+            else -> seatsCnt2
+        }
+
         var lastLoginDatetime: LocalDateTime? = null
         var lastLogoutDatetime: LocalDateTime? = null
         var lastPageViewDatetime: LocalDateTime? = null
@@ -154,12 +191,19 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
                 && (lastLogoutDatetime == null || lastLogoutDatetime < lastLoginDatetime)
                 && lastPageViewDatetime < reservationDatetime
                 && lastLoginDatetime < lastPageViewDatetime
+                && reservationInfo.ticket_num + targetConcertSeats <= Constants.MAX_CONCERT_SEATS
             )
     }
 
     private fun saveReservation(reservation: Reservation, ticketNum : Int) {
         for(i in (0 until ticketNum)) {
             ddbMapper.save(reservation)
+        }
+
+        when(reservation.concert_id) {
+            0 -> seatsCnt0 += ticketNum
+            1 -> seatsCnt1 += ticketNum
+            2 -> seatsCnt2 += ticketNum
         }
     }
 
@@ -169,9 +213,9 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
         }
     }
 
-    private fun getEventPartition(eventId: Int): List<Event> {
+    private fun getEventPartition(eventId: String): List<Event> {
         val eav = HashMap<String, AttributeValue>()
-        eav[":eventId"] = AttributeValue().withN(eventId.toString())
+        eav[":eventId"] = AttributeValue(eventId)
 
         val scanExpression = DynamoDBScanExpression()
             .withFilterExpression("event_id = :eventId")
