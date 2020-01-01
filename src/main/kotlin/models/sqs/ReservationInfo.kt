@@ -1,8 +1,10 @@
 package models.sqs
 
+import java.time.LocalDateTime
+
 data class ReservationInfo(
-    val event_id: String,
-    val user_id: String,
-    val ticket_num: Int,
-    val concert_id: Int
+    val event_name: String,
+    val event_datetime: LocalDateTime,
+    val event_common: EventCommon,
+    val event_dic: EventDetail
 )

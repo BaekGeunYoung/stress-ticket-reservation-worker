@@ -145,18 +145,20 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
             val reservationInfo: ReservationInfo = jsonMapper.readValue(message.body())
             val reservationDatetime = LocalDateTime.now()
             val reservation = Reservation(
-                        user_id = reservationInfo.user_id,
+                        user_id = reservationInfo.event_dic.user_id,
                         reservation_datetime = reservationDatetime,
-                        concert_id = reservationInfo.concert_id
+                        concert_id = reservationInfo.event_dic.concert_id
                     )
 
+            val ticketNum = reservationInfo.event_dic.ticket_num
+
             if(isValidScenario(reservationInfo, reservationDatetime)) {
-                saveReservation(reservation, reservationInfo.ticket_num)
-                println("saved ${reservationInfo.ticket_num} successful reservation(s)")
+                saveReservation(reservation, ticketNum)
+                println("saved $ticketNum successful reservation(s)")
             }
             else {
-                saveReservation(reservation.toFailedReservation(), reservationInfo.ticket_num)
-                println("saved ${reservationInfo.ticket_num} failed reservation(s)")
+                saveReservation(reservation.toFailedReservation(), ticketNum)
+                println("saved $ticketNum failed reservation(s)")
             }
         } catch (e : JsonParseException) {
             println("${message.body()} cannot be parsed into ReservationInfo class")
@@ -169,9 +171,9 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
         reservationDatetime: LocalDateTime
     ) : Boolean {
         //partition key를 통한 event table 조회
-        val eventItems = getEventPartition(reservationInfo.event_id)
+        val eventItems = getEventPartition(reservationInfo.event_common.event_id)
 
-        val targetConcertSeats = when(reservationInfo.concert_id) {
+        val targetConcertSeats = when(reservationInfo.event_dic.concert_id) {
             0 -> seatsCnt0
             1 -> seatsCnt1
             else -> seatsCnt2
@@ -194,7 +196,7 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
                 && (lastLogoutDatetime == null || lastLogoutDatetime < lastLoginDatetime)
                 && lastPageViewDatetime < reservationDatetime
                 && lastLoginDatetime < lastPageViewDatetime
-                && reservationInfo.ticket_num + targetConcertSeats <= Constants.MAX_CONCERT_SEATS
+                && reservationInfo.event_dic.ticket_num + targetConcertSeats <= Constants.MAX_CONCERT_SEATS
             )
     }
 
