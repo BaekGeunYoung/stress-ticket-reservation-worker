@@ -14,6 +14,10 @@ data class FailedReservation(
     @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.S)
     var user_id: String,
 
+    @DynamoDBAttribute(attributeName = "concert_id")
+    @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.N)
+    var concert_id: Int,
+
     @DynamoDBAttribute(attributeName = "reservation_datetime")
     @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.S)
     var reservation_datetime: LocalDateTime

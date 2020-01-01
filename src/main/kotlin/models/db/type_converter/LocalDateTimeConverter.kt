@@ -11,5 +11,4 @@ class LocalDateTimeConverter : DynamoDBTypeConverter<String, LocalDateTime> {
     override fun convert(localDateTime: LocalDateTime?): String {
         return localDateTime.toString()
     }
-
 }

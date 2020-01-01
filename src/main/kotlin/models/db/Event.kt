@@ -7,8 +7,8 @@ import java.time.LocalDateTime
 @DynamoDBTable(tableName = "event")
 data class Event(
     @DynamoDBHashKey(attributeName = "event_id")
-    @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.N)
-    var event_id: Int,
+    @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.S)
+    var event_id: String,
 
     @DynamoDBRangeKey(attributeName = "event_name")
     @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.S)
@@ -34,5 +34,5 @@ data class Event(
     @DynamoDBTypeConverted(converter = LocalDateTimeConverter::class)
     var lastReservationDatetime: LocalDateTime? = null
 ) {
-    constructor() : this(event_id = -1, event_name = "")
+    constructor() : this(event_id = "", event_name = "")
 }

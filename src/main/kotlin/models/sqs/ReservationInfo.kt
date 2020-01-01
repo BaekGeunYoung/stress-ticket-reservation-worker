@@ -1,7 +1,8 @@
 package models.sqs
 
 data class ReservationInfo(
-    val event_id: Int,
+    val event_id: String,
     val user_id: String,
-    val ticket_num: Int
+    val ticket_num: Int,
+    val concert_id: Int
 )
