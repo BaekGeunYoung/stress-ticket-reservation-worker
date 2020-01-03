@@ -14,9 +14,9 @@ fun main() {
 
     val ddbMapper = DynamoDBMapper(ddbClient)
 
-    for(i in (10000 until 11000)) {
-        val loginEvent = Event(event_id = i.toString(), event_name = Constants.LOGIN, lastLoginDatetime = LocalDateTime.parse("2019-12-31T10:00:00.000"))
-        val pageViewEvent = Event(event_id = i.toString(), event_name = Constants.PAGE_VIEW, lastPageViewDatetime = LocalDateTime.parse("2019-12-31T11:00:00.000"))
+    for(i in (0 until 1500)) {
+        val loginEvent = Event(event_id = i.toString(), event_name = Constants.LOGIN, lastLoginDatetime = LocalDateTime.parse("2020-01-03T10:00:00.000"))
+        val pageViewEvent = Event(event_id = i.toString(), event_name = Constants.PAGE_VIEW, lastPageViewDatetime = LocalDateTime.parse("2020-01-03T11:00:00.000"))
 
         ddbMapper.save(loginEvent)
         ddbMapper.save(pageViewEvent)
