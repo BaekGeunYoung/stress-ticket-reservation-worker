@@ -17,12 +17,31 @@ fun main() {
     val jsonMapper = jacksonObjectMapper()
 
 
-    for(i in (0 until 1500)) {
+//    for(i in (0 until 1500)) {
+//        val reservationInfo
+//                = ReservationInfo(
+//            event_name = "RESERVE_TICKET",
+//            event_datetime = LocalDateTime.now().toString(),
+//            event_common = EventCommon(event_id = i.toString()),
+//            event_dic = EventDetail(user_id = "geunyoung", concert_id = 0, ticket_num = 1)
+//        )
+//        val messageBody = jsonMapper.writeValueAsString(reservationInfo)
+//
+//        val sendMsgRequest = SendMessageRequest.builder()
+//            .queueUrl(Constants.sqsEndpoint)
+//            .messageBody(messageBody)
+//            .build()
+//
+//        sqs.sendMessage(sendMsgRequest)
+//        println("Message sent with id: $i")
+//    }
+
+    for(i in (0 until 10)) {
         val reservationInfo
                 = ReservationInfo(
             event_name = "RESERVE_TICKET",
-            event_datetime = LocalDateTime.now(),
-            event_common = EventCommon(event_id = "0"),
+            event_datetime = LocalDateTime.now().toString(),
+            event_common = EventCommon(event_id = i.toString()),
             event_dic = EventDetail(user_id = "geunyoung", concert_id = 0, ticket_num = 1)
         )
         val messageBody = jsonMapper.writeValueAsString(reservationInfo)

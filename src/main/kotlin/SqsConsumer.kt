@@ -163,7 +163,6 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
         } catch (e : JsonParseException) {
             println("${message.body()} cannot be parsed into ReservationInfo class")
         }
-
     }
 
     private fun isValidScenario(
