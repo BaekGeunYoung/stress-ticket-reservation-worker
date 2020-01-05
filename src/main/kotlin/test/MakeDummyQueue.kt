@@ -16,7 +16,7 @@ fun main() {
 
     val jsonMapper = jacksonObjectMapper()
 
-    for(i in (0 until 1500)) {
+    for(i in (0 until 100)) {
         val reservationInfo
                 = ReservationInfo(
             event_name = "RESERVE_TICKET",

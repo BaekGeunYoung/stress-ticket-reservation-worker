@@ -1,6 +1,7 @@
 package models.db
 
 import com.amazonaws.services.dynamodbv2.datamodeling.*
+import models.db.type_converter.LocalDateTimeConverter
 import java.time.LocalDateTime
 
 @DynamoDBTable(tableName = "reservation")
@@ -12,15 +13,16 @@ data class Reservation(
 
     @DynamoDBAttribute(attributeName = "user_id")
     @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.S)
-    var user_id: String,
+    var user_id: String?,
 
     @DynamoDBAttribute(attributeName = "concert_id")
     @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.N)
-    var concert_id: Int,
+    var concert_id: Int?,
 
     @DynamoDBAttribute(attributeName = "reservation_datetime")
     @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.S)
-    var reservation_datetime: LocalDateTime
+    @DynamoDBTypeConverted(converter = LocalDateTimeConverter::class)
+    var reservation_datetime: LocalDateTime?
 ) {
     fun toFailedReservation()
             = FailedReservation(
@@ -28,4 +30,6 @@ data class Reservation(
                 reservation_datetime = reservation_datetime,
                 concert_id = concert_id
             )
+
+    constructor() : this(null, null, null, null)
 }
