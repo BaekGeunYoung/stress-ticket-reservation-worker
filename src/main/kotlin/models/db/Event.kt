@@ -29,6 +29,10 @@ data class Event(
     @DynamoDBTypeConverted(converter = LocalDateTimeConverter::class)
     var lastPageViewDatetime: LocalDateTime? = null,
 
+    @DynamoDBAttribute(attributeName = "page_view_concert_id")
+    @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.N)
+    var pageViewConcertId: Int? = null,
+
     @DynamoDBAttribute(attributeName = "last_reservation_datetime")
     @DynamoDBTyped(DynamoDBMapperFieldModel.DynamoDBAttributeType.S)
     @DynamoDBTypeConverted(converter = LocalDateTimeConverter::class)
