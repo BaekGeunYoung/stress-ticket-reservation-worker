@@ -143,7 +143,7 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
         try{
             //mapper를 이용해 queue message를 ReservationInfo 객체로 parsing 한다.
             val reservationInfo: ReservationInfo = jsonMapper.readValue(message.body())
-            val reservationDatetime = LocalDateTime.now()
+            val reservationDatetime = LocalDateTime.parse(reservationInfo.event_datetime)
             val reservation = Reservation(
                         user_id = reservationInfo.event_dic.user_id,
                         reservation_datetime = reservationDatetime,
@@ -181,17 +181,22 @@ class SqsConsumer (private val sqs: SqsAsyncClient): CoroutineScope {
         var lastLoginDatetime: LocalDateTime? = null
         var lastLogoutDatetime: LocalDateTime? = null
         var lastPageViewDatetime: LocalDateTime? = null
+        var pageViewConcertId: Int? = null
 
         for(eventItem in eventItems) {
             when(eventItem.event_name) {
                 Constants.LOGIN -> lastLoginDatetime = eventItem.lastLoginDatetime
                 Constants.LOGOUT -> lastLogoutDatetime = eventItem.lastLogoutDatetime
-                Constants.PAGE_VIEW -> lastPageViewDatetime = eventItem.lastPageViewDatetime
+                Constants.PAGE_VIEW -> {
+                    lastPageViewDatetime = eventItem.lastPageViewDatetime
+                    pageViewConcertId = eventItem.pageViewConcertId
+                }
             }
         }
 
         return (
-            lastLoginDatetime != null && lastPageViewDatetime != null
+            lastLoginDatetime != null && lastPageViewDatetime != null && pageViewConcertId != null
+                && pageViewConcertId == reservationInfo.event_dic.concert_id
                 && (lastLogoutDatetime == null || lastLogoutDatetime < lastLoginDatetime)
                 && lastPageViewDatetime < reservationDatetime
                 && lastLoginDatetime < lastPageViewDatetime
