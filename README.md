@@ -122,6 +122,7 @@ pageview_datetime, pageview_concert_id (event_name 이 PAGE_VIEW일 경우)
 reservation_datetime (event_name 이 TICKET_RESERVE일 경우)
 
 (** 이벤트의 경우 한 사용자가 일으키는 일련의 이벤트가 모두 같은 id를 공유하기 때문에 event_id를 기준으로 partition을 구성할 수 있고, sort key를 event_name으로 설정함으로써 이 필드를 통한 search 작업이 용이하도록 했다.)
+
 (** 이 테이블의 데이터는 영구적으로 저장될 필요가 없으므로, TTL을 설정해 일정시간이 지나면 자동으로 지워지도록 설정해주었다.)
 
 ### 4. reservation - 공연 예약 내역 테이블
