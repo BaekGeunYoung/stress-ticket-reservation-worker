@@ -6,8 +6,8 @@
 
 ## Focus
 
-### Row Latency (지연시간)
-비동기 처리를 통하여 Response 를 빠르게 반환함으로써, Row Latency 를 보장하는 WAS 를 구현한다.
+### Low Latency (지연시간)
+비동기 처리를 통하여 Response 를 빠르게 반환함으로써, Low Latency 를 보장하는 WAS 를 구현한다.
 
 ### Idempotent (멱등성)
 데이터의 손실 없이 정확하고 안전하게 파이프라인을 구축하여 멱등성을 보장한다.
@@ -20,7 +20,7 @@
 
 ## Tech
 
-### Multi-Tread
+### Multi-Thread
 서버의 효율성 및 안정성을 위해 멀티 스레딩 기법을 이용하기로 결정했다. 본 프로젝트에서 사용하게 될 언어인 코틀린에서는 경량화된 스레드라고 할 수 있는 coroutine을 제공하기 때문에, 이것을 사용하기로 했다.
 
 ### SQS
